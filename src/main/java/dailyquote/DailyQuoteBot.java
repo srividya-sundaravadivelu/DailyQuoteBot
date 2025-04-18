@@ -38,7 +38,7 @@ public class DailyQuoteBot {
 			System.out.println("Launching Chrome");
 
 			ChromeOptions options = new ChromeOptions();
-		    //options.addArguments("--headless=new");
+		    options.addArguments("--headless=new");
 			options.addArguments("--disable-gpu"); // Disable GPU acceleration
 			options.addArguments("--no-sandbox"); // Bypass OS security model
 			options.addArguments("--disable-dev-shm-usage"); // Overcome limited resource problems
