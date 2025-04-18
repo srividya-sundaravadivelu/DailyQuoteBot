@@ -1,0 +1,26 @@
+name: Daily Quote Email
+
+on:
+  schedule:    
+    - cron: '0 14 * * *'  # Uncomment this line to run daily at 9:00 AM CST
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '22'
+
+      - name: Build with Maven
+        run: mvn compile
+
+      - name: Run DailyQuoteBot
+        run: mvn exec:java -Dexec.mainClass="dailyquote.DailyQuoteBot"
