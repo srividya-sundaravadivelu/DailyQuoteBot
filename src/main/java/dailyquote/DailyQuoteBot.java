@@ -38,10 +38,13 @@ public class DailyQuoteBot {
 			System.out.println("Launching Chrome");
 
 			ChromeOptions options = new ChromeOptions();
-		    options.addArguments("--headless=new");
+			options.addArguments("--headless=new");
 			options.addArguments("--disable-gpu"); // Disable GPU acceleration
 			options.addArguments("--no-sandbox"); // Bypass OS security model
 			options.addArguments("--disable-dev-shm-usage"); // Overcome limited resource problems
+			//Anti-Bot Detection: The web site blocks headless mode. Add below line to fix this
+			options.addArguments("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
+
 
 			userDataDir = Files.createTempDirectory("chrome-user-data");
 			options.addArguments("--user-data-dir=" + userDataDir.toAbsolutePath().toString());
@@ -54,8 +57,12 @@ public class DailyQuoteBot {
 
 			WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20));
 
+//			List<WebElement> quoteTags = wait
+//					.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.cssSelector("a.b-qt")));
+
 			List<WebElement> quoteTags = wait
-					.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.cssSelector("a.b-qt")));
+					.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.cssSelector("a.b-qt")));
+
 			System.out.println("Found " + quoteTags.size() + " quotes.");
 
 			Random random = new Random();
@@ -71,7 +78,7 @@ public class DailyQuoteBot {
 			}
 			Thread.sleep(1000); // Wait for 1 second
 			DirectoryDeleter.deleteDirectory(userDataDir);
-			
+
 //			if (userDataDir != null) {
 //				Files.deleteIfExists(userDataDir);
 //			}
