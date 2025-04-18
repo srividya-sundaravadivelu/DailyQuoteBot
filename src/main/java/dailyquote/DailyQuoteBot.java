@@ -15,10 +15,13 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Properties;
 import java.util.Random;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class DailyQuoteBot {
 
-	public static void main(String[] args) throws InterruptedException {
+	public static void main(String[] args) throws InterruptedException, IOException {
 		// Scrape the quote
 		String quote = getRandomQuote();
 
@@ -26,34 +29,50 @@ public class DailyQuoteBot {
 		sendEmail(quote);
 	}
 
-	public static String getRandomQuote() throws InterruptedException {
-		System.out.println("Launching Chrome");
+	public static String getRandomQuote() throws InterruptedException, IOException {
+		WebDriver driver = null;
+		Path userDataDir = null;
+		String selectedQuote = "Keep going, you're doing great!"; // Default quote;
 
-		ChromeOptions options = new ChromeOptions();
-//		options.addArguments("--headless=new");
-		options.addArguments("--disable-gpu");  // Disable GPU acceleration
-		options.addArguments("--no-sandbox");   // Bypass OS security model
-		options.addArguments("--disable-dev-shm-usage"); // Overcome limited resource problems
-		WebDriver driver = new ChromeDriver(options);
+		try {
+			System.out.println("Launching Chrome");
 
-		driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(20));
-		driver.get("https://www.brainyquote.com/topics/motivational-quotes");
-		driver.manage().window().maximize();
+			ChromeOptions options = new ChromeOptions();
+//		    options.addArguments("--headless=new");
+			options.addArguments("--disable-gpu"); // Disable GPU acceleration
+			options.addArguments("--no-sandbox"); // Bypass OS security model
+			options.addArguments("--disable-dev-shm-usage"); // Overcome limited resource problems
 
-		WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20));
+			userDataDir = Files.createTempDirectory("chrome-user-data");
+			options.addArguments("--user-data-dir=" + userDataDir.toAbsolutePath().toString());
 
-		List<WebElement> quoteTags = wait
-				.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.cssSelector("a.b-qt")));
-		System.out.println("Found " + quoteTags.size() + " quotes.");
+			driver = new ChromeDriver(options);
 
-		Random random = new Random();
-		String selectedQuote = "Keep going, you're doing great!"; // Default quote
+			driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(20));
+			driver.get("https://www.brainyquote.com/topics/motivational-quotes");
+			driver.manage().window().maximize();
 
-		if (!quoteTags.isEmpty()) {
-			selectedQuote = quoteTags.get(random.nextInt(quoteTags.size())).getText();
+			WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20));
+
+			List<WebElement> quoteTags = wait
+					.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.cssSelector("a.b-qt")));
+			System.out.println("Found " + quoteTags.size() + " quotes.");
+
+			Random random = new Random();
+
+			if (!quoteTags.isEmpty()) {
+				selectedQuote = quoteTags.get(random.nextInt(quoteTags.size())).getText();
+			}
 		}
 
-		driver.quit();
+		finally {
+			if (driver != null) {
+				driver.quit();
+			}
+//			if (userDataDir != null) {
+//				Files.deleteIfExists(userDataDir);
+//			}
+		}
 		return selectedQuote;
 	}
 
