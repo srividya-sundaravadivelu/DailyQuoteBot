@@ -2,7 +2,7 @@ name: Daily Quote Email
 
 on:
   schedule:
-    - cron: '*/2 * * * *'  # For testing every 5 minutes
+    - cron: '*/5 * * * *'  # For testing every 5 minutes
     # - cron: '0 14 * * *'  # Uncomment this line to run daily at 9:00 AM CST
 
 jobs:
