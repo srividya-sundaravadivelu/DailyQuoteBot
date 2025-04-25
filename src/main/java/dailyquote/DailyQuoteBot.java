@@ -12,6 +12,7 @@ import javax.mail.*;
 import javax.mail.internet.*;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.Random;
@@ -29,71 +30,79 @@ public class DailyQuoteBot {
 		sendEmail(quote);
 	}
 
-	public static String getRandomQuote() throws InterruptedException, IOException {
+	public static String getRandomQuote() throws IOException, InterruptedException {
 		WebDriver driver = null;
 		Path userDataDir = null;
-		String selectedQuote = "Keep going, you're doing great!"; // Default quote;
+		String randomFormattedQuote = "Keep going, you're doing great!"; // Default
 
 		try {
 			System.out.println("Launching Chrome");
-
+			
 			ChromeOptions options = new ChromeOptions();
 			options.addArguments("--headless=new");
-			options.addArguments("--disable-gpu"); // Disable GPU acceleration
-			options.addArguments("--no-sandbox"); // Bypass OS security model
-			options.addArguments("--disable-dev-shm-usage"); // Overcome limited resource problems
-			//Anti-Bot Detection: The web site blocks headless mode. Add below line to fix this
-			options.addArguments("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
-
+//			options.addArguments("--disable-gpu");
+//			options.addArguments("--no-sandbox");
+//			options.addArguments("--disable-dev-shm-usage");
+//			options.addArguments(
+//					"--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
 
 			userDataDir = Files.createTempDirectory("chrome-user-data");
-			options.addArguments("--user-data-dir=" + userDataDir.toAbsolutePath().toString());
+			options.addArguments("--user-data-dir=" + userDataDir.toAbsolutePath());
 
 			driver = new ChromeDriver(options);
+			WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
 
-			driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(20));
-			driver.get("https://www.brainyquote.com/topics/motivational-quotes");
-			driver.manage().window().maximize();
+			driver.get("https://quotes.toscrape.com");
 
-			WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20));
+			List<String> allQuotes = new ArrayList<>();
 
-//			List<WebElement> quoteTags = wait
-//					.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.cssSelector("a.b-qt")));
+			while (true) {
+				List<WebElement> quotes = wait
+						.until(ExpectedConditions.presenceOfAllElementsLocatedBy(By.className("quote")));
 
-			List<WebElement> quoteTags = wait
-					.until(ExpectedConditions.visibilityOfAllElementsLocatedBy(By.cssSelector("a.b-qt")));
+				for (WebElement quote : quotes) {
+					String text = quote.findElement(By.className("text")).getText();
+					String author = quote.findElement(By.className("author")).getText();
 
-			System.out.println("Found " + quoteTags.size() + " quotes.");
-
-			Random random = new Random();
-
-			if (!quoteTags.isEmpty()) {
-				selectedQuote = quoteTags.get(random.nextInt(quoteTags.size())).getText();
+					String formatted = String.format("%s — %s", text, author);
+					allQuotes.add(formatted);
+				}				
+				
+				List<WebElement> nextButton = driver.findElements(By.cssSelector(".pager .next a"));
+				if (nextButton.isEmpty())
+					break;
+				nextButton.get(0).click();
 			}
-		}
+			
+			System.out.println("Total quotes scraped: " + allQuotes.size());		
 
-		finally {
-			if (driver != null) {
+
+			if (!allQuotes.isEmpty()) {
+				randomFormattedQuote = allQuotes.get(new Random().nextInt(allQuotes.size()));
+			}
+
+		} finally {
+			if (driver != null)
 				driver.quit();
-			}
-			Thread.sleep(1000); // Wait for 1 second
-			DirectoryDeleter.deleteDirectory(userDataDir);
-
-//			if (userDataDir != null) {
-//				Files.deleteIfExists(userDataDir);
-//			}
+			if (userDataDir != null)
+				DirectoryDeleter.deleteDirectory(userDataDir);
 		}
-		return selectedQuote;
+
+		return randomFormattedQuote;
 	}
 
 	public static void sendEmail(String quote) {
-		String senderEmail = System.getenv("EMAIL_USER");
-		String receiverEmail = System.getenv("EMAIL_USER");
-		String emailPassword = System.getenv("EMAIL_PASS");
+//		String senderEmail = System.getenv("EMAIL_USER");
+//		String receiverEmail = System.getenv("EMAIL_USER");
+//		String emailPassword = System.getenv("EMAIL_PASS");
+
+		String senderEmail = System.getenv().getOrDefault("EMAIL_USER", "srividya18.2002@gmail.com");
+		String receiverEmail = System.getenv().getOrDefault("EMAIL_USER", "srividya18.2002@gmail.com");
+		String emailPassword = System.getenv().getOrDefault("EMAIL_PASS", "qhaopqeommzqwriu");
 
 		// Email content
 		String subject = "Your Daily Motivation Quote";
-		String body = "Here’s your daily dose of motivation:\n\n\"" + quote + "\"\n\nHave a great day!";
+		String body = "Here’s your daily dose of motivation:\n\n" + quote + "\n\nHave a great day!";
 
 		// Set email properties
 		Properties properties = new Properties();
