@@ -92,13 +92,9 @@ public class DailyQuoteBot {
 	}
 
 	public static void sendEmail(String quote) {
-//		String senderEmail = System.getenv("EMAIL_USER");
-//		String receiverEmail = System.getenv("EMAIL_USER");
-//		String emailPassword = System.getenv("EMAIL_PASS");
-
-		String senderEmail = System.getenv().getOrDefault("EMAIL_USER", "srividya18.2002@gmail.com");
-		String receiverEmail = System.getenv().getOrDefault("EMAIL_USER", "srividya18.2002@gmail.com");
-		String emailPassword = System.getenv().getOrDefault("EMAIL_PASS", "qhaopqeommzqwriu");
+		String senderEmail = System.getenv("EMAIL_USER");
+		String receiverEmail = System.getenv("EMAIL_USER");
+		String emailPassword = System.getenv("EMAIL_PASS");		
 
 		// Email content
 		String subject = "Your Daily Motivation Quote";
